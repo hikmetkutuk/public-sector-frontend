@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import {
-  Home,
-  Wrench,
-  Sun,
-  Moon,
-  Menu,
-  ChevronDown,
-  User,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { Home, Wrench, Sun, Moon, Menu, ChevronDown, User, Logs } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const Sidebar: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -19,22 +12,22 @@ const Sidebar: React.FC = () => {
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    const storedDarkMode = localStorage.getItem("darkMode");
-    if (storedDarkMode === "true") {
+    const storedDarkMode = localStorage.getItem('darkMode');
+    if (storedDarkMode === 'true') {
       setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.add('dark');
     }
   }, []);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
       const newMode = !prev;
-      localStorage.setItem("darkMode", String(newMode));
+      localStorage.setItem('darkMode', String(newMode));
 
       if (newMode) {
-        document.documentElement.classList.add("dark");
+        document.documentElement.classList.add('dark');
       } else {
-        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.remove('dark');
       }
 
       return newMode;
@@ -48,19 +41,19 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-screen flex-col">
       {/* Navbar (Header) */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-gray-800 dark:bg-gray-900 text-white flex items-center px-6 shadow-md z-50">
+      <header className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center bg-gray-800 px-6 text-white shadow-md dark:bg-gray-900">
         <h1 className="text-xl font-bold">ps</h1>
-        <div className="flex-1 flex justify-center"></div>
+        <div className="flex flex-1 justify-center"></div>
         {/* Dark Mode Butonu */}
         <button
           onClick={toggleDarkMode}
-          className="p-2 pr-2 bg-gray-700 hover:bg-gray-600 rounded-lg mx-3"
+          className="mx-3 rounded-lg bg-gray-700 p-2 pr-2 hover:bg-gray-600"
         >
           {isDarkMode ? <Sun /> : <Moon />}
         </button>
-        <button className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600">
+        <button className="rounded-lg bg-gray-700 p-2 hover:bg-gray-600">
           <User />
         </button>
       </header>
@@ -68,15 +61,15 @@ const Sidebar: React.FC = () => {
       <div className="flex flex-1 pt-14">
         {/* Sidebar */}
         <motion.div
-          animate={{ width: isOpen ? "250px" : "80px" }}
-          className="fixed left-0 top-14 bottom-0 bg-gray-800 dark:bg-gray-900 text-white shadow-lg h-screen flex flex-col overflow-y-auto"
+          animate={{ width: isOpen ? '16rem' : '5rem' }}
+          className="fixed bottom-0 left-0 top-14 flex h-screen flex-col overflow-y-auto bg-gray-800 text-white shadow-lg transition-all duration-300 dark:bg-gray-900"
         >
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4">
             {isOpen && <h1 className="text-2xl font-bold"></h1>}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
+              className="rounded-lg bg-gray-700 p-2 hover:bg-gray-600"
             >
               <Menu />
             </button>
@@ -86,57 +79,46 @@ const Sidebar: React.FC = () => {
           <nav className="mt-4 flex flex-col space-y-2">
             <a
               href="/"
-              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-700 rounded-lg transition"
+              className="flex items-center gap-3 rounded-lg px-4 py-2 transition hover:bg-gray-700"
             >
-              <Home /> {isOpen && "Ana Sayfa"}
+              <Home /> {isOpen && 'Ana Sayfa'}
             </a>
 
             <div className="flex flex-col">
               <button
-                onClick={() => toggleSubmenu("parameters")}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-700 rounded-lg transition"
+                onClick={() => toggleSubmenu('parameters')}
+                className="flex w-full items-center justify-between rounded-lg px-4 py-2 transition hover:bg-gray-700"
               >
                 <div className="flex items-center gap-3">
-                  <Wrench /> {isOpen && "Sistem Parametreleri"}
+                  <Wrench /> {isOpen && 'Sistem Parametreleri'}
                 </div>
                 {isOpen && (
                   <ChevronDown
                     className={`transition-transform ${
-                      openMenus["parameters"] ? "rotate-180" : ""
+                      openMenus['parameters'] ? 'rotate-180' : ''
                     }`}
                   />
                 )}
               </button>
-              {openMenus["parameters"] && (
+              {openMenus['parameters'] && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
+                  animate={{ height: 'auto', opacity: 1 }}
                   className="ml-6 flex flex-col space-y-2"
                 >
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm hover:bg-gray-700 rounded-lg"
+                  <Link
+                    href="/definition"
+                    className="block rounded-lg px-4 py-2 text-sm hover:bg-gray-700"
                   >
-                    Profile
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm hover:bg-gray-700 rounded-lg"
-                  >
-                    Security
-                  </a>
+                    <div className="flex items-center gap-3">
+                      <Logs /> Tanımlar{' '}
+                    </div>
+                  </Link>
                 </motion.div>
               )}
             </div>
           </nav>
         </motion.div>
-
-        {/* Main Content */}
-        <main
-          className={`flex-1 p-6 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white transition-all ${
-            isOpen ? "pl-[250px]" : "pl-[80px]"
-          }`}
-        ></main>
       </div>
     </div>
   );
