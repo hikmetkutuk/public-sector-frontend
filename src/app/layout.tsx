@@ -1,12 +1,14 @@
-import type { Metadata } from 'next';
+'use client';
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
 import React from 'react';
+import { IBM_Plex_Serif, Inter } from 'next/font/google';
 
-export const metadata: Metadata = {
-  title: 'Public Sector',
-  description: '',
-};
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const ibmPlexSerif = IBM_Plex_Serif({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-ibm-plex-serif',
+});
 
 export default function RootLayout({
   children,
@@ -15,13 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="relative">
-        <div className="flex">
-          <Sidebar />
-          <main className="ml-64 min-h-screen flex-1 p-4 transition-all duration-300">
-            {children}
-          </main>
-        </div>
+      <body
+        suppressHydrationWarning={true}
+        className={`${inter.variable} ${ibmPlexSerif.variable}`}
+      >
+        <div className="dark:bg-boxdark-2 dark:text-bodydark">{children}</div>
       </body>
     </html>
   );

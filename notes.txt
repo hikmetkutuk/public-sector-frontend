@@ -1,1 +1,0 @@
-bun create next-app@next-14
