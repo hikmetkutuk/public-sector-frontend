@@ -6,6 +6,9 @@ import Welcome from '@/components/Welcome';
 export const metadata: Metadata = {
   title: 'Public Sector',
   description: '',
+  icons: {
+    icon: '/images/logo.svg',
+  },
 };
 
 export default function Home() {
