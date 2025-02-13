@@ -21,3 +21,7 @@ declare interface SidebarProps {
 declare interface SidebarDropdownProps {
   item: SidebarItemType[];
 }
+
+declare interface DefinitionProps {
+  name: string;
+}
