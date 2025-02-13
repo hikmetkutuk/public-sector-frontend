@@ -23,5 +23,23 @@ declare interface SidebarDropdownProps {
 }
 
 declare interface DefinitionProps {
+  id: string;
   name: string;
+  parentName?: string;
+  typeText: string;
+}
+
+declare interface DefinitionPageProps {
+  definitions: DefinitionProps[];
+}
+
+declare interface DropdownProps {
+  value: number;
+  label: string;
+}
+
+declare interface DropdownComponentProps {
+  options: { value: string | number; label: string }[];
+  placeholder?: string;
+  onChange: (selected: { value: string | number; label: string }) => void;
 }
