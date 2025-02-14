@@ -10,7 +10,6 @@ const Dropdown: React.FC<DropdownComponentProps> = ({
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | null>(null);
   const [isOptionSelected] = useState<boolean>(false);
-console.log('options', options);
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     const selectedOption = options.find(
@@ -27,15 +26,11 @@ console.log('options', options);
 
   return (
     <div>
-      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-        {placeholder}:
-      </label>
-
-      <div className="dark:bg-form-input relative z-20 bg-white">
+      <div className="relative z-20 bg-white dark:bg-form-input">
         <select
           value={selectedOption ?? ''}
           onChange={handleChange}
-          className={`border-stroke focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input relative z-20 w-full appearance-none rounded border bg-transparent px-12 py-3 outline-none transition ${
+          className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input ${
             isOptionSelected ? 'text-black dark:text-white' : ''
           }`}
         >
