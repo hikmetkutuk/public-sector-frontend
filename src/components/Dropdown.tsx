@@ -9,7 +9,7 @@ const Dropdown: React.FC<DropdownComponentProps> = ({
   onChange,
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | null>(null);
-  const [isOptionSelected] = useState<boolean>(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     const selectedOption = options.find(
@@ -25,33 +25,35 @@ const Dropdown: React.FC<DropdownComponentProps> = ({
   };
 
   return (
-    <div>
-      <div className="relative z-20 bg-white dark:bg-form-input">
-        <select
-          value={selectedOption ?? ''}
-          onChange={handleChange}
-          className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input ${
-            isOptionSelected ? 'text-black dark:text-white' : ''
-          }`}
-        >
-          <option value="" disabled>
-            {placeholder}
-          </option>
-          {options.map((option) => (
+    <div className="relative w-full">
+      <select
+        value={selectedOption ?? ''}
+        onChange={handleChange}
+        className="w-full appearance-none rounded border border-stroke bg-transparent bg-white px-5 py-3 outline-none transition-all duration-300 focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
+      >
+        <option value="" disabled className="text-body dark:text-bodydark">
+          {placeholder}
+        </option>
+        {options.map((option) => {
+          if (option.value === undefined || option.label === undefined) {
+            return null;
+          }
+
+          return (
             <option
-              key={option.value}
+              key={`${option.value}-${option.label}`}
               value={option.value}
               className="text-body dark:text-bodydark"
             >
               {option.label}
             </option>
-          ))}
-        </select>
+          );
+        })}
+      </select>
 
-        <span className="absolute right-4 top-1/2 z-50 -translate-y-1/2 dark:text-white">
-          <ChevronDown />
-        </span>
-      </div>
+      <span className="absolute right-4 top-1/2 z-50 -translate-y-1/2 dark:text-white">
+        <ChevronDown />
+      </span>
     </div>
   );
 };
