@@ -43,3 +43,10 @@ declare interface DropdownComponentProps {
   placeholder?: string;
   onChange: (selected: { value: string | number; label: string }) => void;
 }
+
+declare interface CreateDefinitionProps {
+  name: string;
+  code?: string;
+  parentName?: string;
+  type: number;
+}

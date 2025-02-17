@@ -6,6 +6,11 @@ import Breadcrumb from '@/components/Breadcrumbs/Breadcrumb';
 import { DefinitionPageProps } from '@/types';
 import { FilePenLine, Trash2 } from 'lucide-react';
 import Dropdown from '@/components/Dropdown';
+import {
+  createDefinition,
+  fetchDefinitions,
+  fetchEnumDefinitions,
+} from '@/services/definitionService';
 
 const Definition = () => {
   const [definitions, setDefinitions] = useState<DefinitionPageProps['definitions']>([]);
@@ -17,17 +22,30 @@ const Definition = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [definitionType, setDefinitionType] = useState<number | null>(null);
   const [, setSelectedParentDefinition] = useState<number | null>(null);
+  const [newDefinition, setNewDefinition] = useState({
+    name: '',
+    code: '',
+    type: '',
+    parentId: '',
+  });
 
   const handleDropdownChange = (selected: { value: string | number; label: string }) => {
     setSelectedEnum(selected.value as number);
   };
 
   const handleDefinitionTypeChange = (selected: { value: string | number; label: string }) => {
-    setDefinitionType(selected.value as number);
+    const typeValue = selected.value !== null ? String(selected.value) : '';
+    setDefinitionType(Number(selected.value));
+    setNewDefinition((prev) => ({ ...prev, type: typeValue }));
   };
 
-  const handleParentDefinitionChange = (selected: { value: string | number; label: string }) => {
-    setSelectedParentDefinition(selected.value as number);
+  const handleParentDefinitionChange = (selected: {
+    value: string | number | null;
+    label: string;
+  }) => {
+    const parentIdValue = selected.value !== null ? String(selected.value) : '';
+    setSelectedParentDefinition(selected.value !== null ? Number(selected.value) : null);
+    setNewDefinition((prev) => ({ ...prev, parentId: parentIdValue }));
   };
 
   const handleOpenModal = () => {
@@ -38,24 +56,32 @@ const Definition = () => {
     setModalOpen(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setNewDefinition((prev) => ({
+      ...prev,
+      name: value,
+    }));
+  };
+
   useEffect(() => {
     if (selectedEnum !== null) {
-      const fetchData = async () => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/definition/${selectedEnum}`
-          );
-          const data = await response.json();
-          setDefinitions(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error('Error retrieving data', error);
-          setDefinitions([]);
-        }
-      };
-
-      fetchData().then((r) => r);
+      fetchDefinitions(selectedEnum).then((data) => setDefinitions(data));
     }
   }, [selectedEnum]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const formattedData = await fetchEnumDefinitions();
+        setDefinitionEnum(formattedData);
+      } catch (error) {
+        console.error('Error fetching enum definitions:', error);
+      }
+    };
+
+    fetchData().then((r) => r);
+  }, []);
 
   useEffect(() => {
     if (definitionType !== null && definitionType === 2) {
@@ -80,25 +106,20 @@ const Definition = () => {
     }
   }, [definitionType]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/enum`);
-        const data = await response.json();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-        const formattedData = Object.keys(data).map((key) => ({
-          value: data[key].value,
-          label: data[key].description,
-        }));
-
-        setDefinitionEnum(formattedData);
-      } catch (error) {
-        console.error('An error occurred while retrieving data: ', error);
-      }
+    const payload = {
+      name: newDefinition.name.trim(),
+      code: newDefinition.code.trim(),
+      type: Number(newDefinition.type),
+      parentId: newDefinition.parentId.trim() || null,
     };
 
-    fetchData().then((r) => r);
-  }, []);
+    const def = await createDefinition(payload);
+    setDefinitions((prev) => [...prev, def]);
+    setModalOpen(false);
+  };
 
   return (
     <DefaultLayout>
@@ -176,7 +197,7 @@ const Definition = () => {
           <div className="z-50 w-full max-w-4xl rounded-lg bg-white p-10 shadow-lg dark:bg-boxdark">
             <h2 className="text-2xl font-semibold text-black dark:text-white">Yeni Tanım Ekle</h2>
             <hr className="my-5 border-t-2 border-gray-300 dark:border-gray-700" />
-            <form>
+            <form onSubmit={handleSubmit}>
               <div>
                 <Dropdown
                   options={definitionEnum}
@@ -188,6 +209,7 @@ const Definition = () => {
                 <input
                   type="text"
                   placeholder="Tanım adı girin"
+                  onChange={handleInputChange}
                   className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 />
               </div>
@@ -197,6 +219,7 @@ const Definition = () => {
                   <input
                     type="text"
                     placeholder="Tanım kodu girin"
+                    onChange={handleInputChange}
                     className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                   />
                 </div>
