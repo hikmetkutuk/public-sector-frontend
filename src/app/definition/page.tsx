@@ -10,6 +10,7 @@ import {
   createDefinition,
   fetchDefinitions,
   fetchEnumDefinitions,
+  fetchParentDefinitions,
 } from '@/services/definitionService';
 
 const Definition = () => {
@@ -86,20 +87,8 @@ const Definition = () => {
   useEffect(() => {
     if (definitionType !== null && definitionType === 2) {
       const fetchData = async () => {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/1`);
-          const data = await response.json();
-          const formattedData = Array.isArray(data)
-            ? data.map((item) => ({
-                value: item.id,
-                label: item.name,
-              }))
-            : [];
-          setParentDefinitions(formattedData);
-        } catch (error) {
-          console.error('Error retrieving parent definitions', error);
-          setParentDefinitions([]);
-        }
+        const formattedData = await fetchParentDefinitions();
+        setParentDefinitions(formattedData);
       };
 
       fetchData().then((r) => r);

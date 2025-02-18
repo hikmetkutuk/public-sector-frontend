@@ -39,3 +39,20 @@ export const fetchEnumDefinitions = async () => {
     throw error;
   }
 };
+
+export const fetchParentDefinitions = async () => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/1`);
+    const data = await response.json();
+
+    return Array.isArray(data)
+      ? data.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }))
+      : [];
+  } catch (error) {
+    console.error('Error retrieving parent definitions:', error);
+    return [];
+  }
+};
