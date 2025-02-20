@@ -18,7 +18,8 @@ export const createDefinition = async (definitionData: CreateDefinitionProps) =>
 export const fetchDefinitions = async (selectedEnum: number) => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${selectedEnum}`);
-    return await response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error retrieving definitions', error);
     return [];
@@ -55,4 +56,12 @@ export const fetchParentDefinitions = async () => {
     console.error('Error retrieving parent definitions:', error);
     return [];
   }
+};
+
+export const deleteDefinition = async (id: string) => {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Silme başarısız');
+  return response.json();
 };
