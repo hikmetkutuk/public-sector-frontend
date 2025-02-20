@@ -1,16 +1,17 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import DefaultLayout from '@/components/Layouts/DefaultLayout';
 import Breadcrumb from '@/components/Breadcrumbs/Breadcrumb';
-import {DefinitionPageProps} from '@/types';
-import {FilePenLine, Trash2} from 'lucide-react';
+import { DefinitionPageProps, DefinitionProps } from '@/types';
+import { FilePenLine, Trash2 } from 'lucide-react';
 import Dropdown from '@/components/Dropdown';
 import {
     createDefinition,
     fetchDefinitions,
     fetchEnumDefinitions,
     fetchParentDefinitions,
+    updateDefinition,
     deleteDefinition,
 } from '@/services/definitionService';
 
@@ -22,6 +23,8 @@ const Definition = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [definitionType, setDefinitionType] = useState<number | null>(null);
     const [, setSelectedParentDefinition] = useState<number | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [definitionId, setDefinitionId] = useState<string | null>(null);
     const [newDefinition, setNewDefinition] = useState({
         name: '',
         code: '',
@@ -31,47 +34,26 @@ const Definition = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [definitionToDelete, setDefinitionToDelete] = useState<string | null>(null);
 
-    const handleDropdownChange = (selected: { value: string | number; label: string }) => {
-        setSelectedEnum(selected.value as number);
-    };
-
-    const handleDefinitionTypeChange = (selected: { value: string | number; label: string }) => {
-        const typeValue = selected.value !== null ? String(selected.value) : '';
-        setDefinitionType(Number(selected.value));
-        setNewDefinition((prev) => ({...prev, type: typeValue}));
-    };
-
-    const handleParentDefinitionChange = (selected: { value: string | number | null; label: string }) => {
-        const parentIdValue = selected.value !== null ? String(selected.value) : '';
-        setSelectedParentDefinition(selected.value !== null ? Number(selected.value) : null);
-        setNewDefinition((prev) => ({...prev, parentId: parentIdValue}));
-    };
-
-    const handleOpenModal = () => setModalOpen(true);
-    const handleCloseModal = () => setModalOpen(false);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const {value} = e.target;
-        setNewDefinition((prev) => ({...prev, name: value}));
-    };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (selectedEnum !== null) {
-                try {
-                    const data = await fetchDefinitions(selectedEnum);
-                    setDefinitions(Array.isArray(data) ? data : []);
-                } catch (error) {
-                    console.error('Error fetching definitions:', error);
-                    setDefinitions([]);
-                }
+    const fetchDefinitionsData = useCallback(async () => {
+        if (selectedEnum !== null) {
+            try {
+                const data = await fetchDefinitions(selectedEnum);
+                setDefinitions(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Error fetching definitions:', error);
+                setDefinitions([]);
             }
-        };
-        fetchData().then(r => r);
+        } else {
+            setDefinitions([]);
+        }
     }, [selectedEnum]);
 
     useEffect(() => {
-        const fetchData = async () => {
+        fetchDefinitionsData();
+    }, [fetchDefinitionsData]);
+
+    useEffect(() => {
+        const fetchEnumData = async () => {
             try {
                 const formattedData = await fetchEnumDefinitions();
                 setDefinitionEnum(Array.isArray(formattedData) ? formattedData : []);
@@ -80,12 +62,12 @@ const Definition = () => {
                 setDefinitionEnum([]);
             }
         };
-        fetchData().then(r => r);
+        fetchEnumData();
     }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (definitionType !== null && definitionType === 2) {
+        const fetchParentData = async () => {
+            if (definitionType === 2) {
                 try {
                     const formattedData = await fetchParentDefinitions();
                     setParentDefinitions(Array.isArray(formattedData) ? formattedData : []);
@@ -93,26 +75,102 @@ const Definition = () => {
                     console.error('Error fetching parent definitions:', error);
                     setParentDefinitions([]);
                 }
+            } else {
+                setParentDefinitions([]);
             }
         };
-        fetchData().then(r => r);
+        fetchParentData();
     }, [definitionType]);
+
+    const handleDropdownChange = (selected: { value: string | number; label: string }) => {
+        setSelectedEnum(selected.value as number);
+    };
+
+    const handleDefinitionTypeChange = (selected: { value: string | number; label: string }) => {
+        const typeValue = String(selected.value);
+        setDefinitionType(Number(selected.value));
+        setNewDefinition((prev) => ({ ...prev, type: typeValue }));
+    };
+
+    const handleParentDefinitionChange = (selected: { value: number | string; label: string }) => {
+        const parentIdValue = String(selected.value);
+        setSelectedParentDefinition(Number(selected.value));
+        setNewDefinition((prev) => ({ ...prev, parentId: parentIdValue }));
+    };
+
+    const handleOpenModal = () => {
+        setIsEditMode(false);
+        setDefinitionId(null);
+        setModalOpen(true);
+    };
+
+    const handleEditClick = (definition: DefinitionProps) => {
+        setIsEditMode(true);
+        setDefinitionId(definition.id);
+        setDefinitionType(definition.type);
+        setSelectedParentDefinition(definition.parentId ? Number(definition.parentId) : null);
+        setNewDefinition({
+            name: definition.name || '',
+            code: definition.code || '',
+            type: String(definition.type) || '',
+            parentId: definition.parentId || '',
+        });
+        setModalOpen(true);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const payload = {
             name: newDefinition.name.trim(),
-            code: newDefinition.code.trim(),
+            code: newDefinition.code.trim() || '',
             type: Number(newDefinition.type),
             parentId: newDefinition.parentId.trim() || null,
         };
+
         try {
-            const def = await createDefinition(payload);
-            setDefinitions((prev) => [...prev, def]);
+            if (isEditMode && definitionId) {
+                const updatedDef = await updateDefinition(definitionId, payload);
+                const updatedDefinitionWithDetails = {
+                    ...updatedDef,
+                    typeText: definitionEnum.find(enumItem => enumItem.value === updatedDef.type)?.label || '',
+                    parentName: parentDefinitions.find(parent => parent.value === Number(updatedDef.parentId))?.label || '',
+                };
+                setDefinitions(prev =>
+                    prev.map(def => def.id === definitionId ? updatedDefinitionWithDetails : def)
+                );
+            } else {
+                const newDef = await createDefinition(payload);
+                const newDefinitionWithDetails = {
+                    ...newDef,
+                    typeText: definitionEnum.find(enumItem => enumItem.value === newDef.type)?.label || '',
+                    parentName: parentDefinitions.find(parent => parent.value === Number(newDef.parentId))?.label || '',
+                };
+                setDefinitions(prev => [...prev, newDefinitionWithDetails]);
+            }
             setModalOpen(false);
+            resetForm();
         } catch (error) {
-            console.error('Error creating definition:', error);
+            console.error('Error processing definition:', error);
+            await fetchDefinitionsData();
         }
+    };
+
+    const resetForm = () => {
+        setNewDefinition({
+            name: '',
+            code: '',
+            type: '',
+            parentId: '',
+        });
+        setIsEditMode(false);
+        setDefinitionId(null);
+        setDefinitionType(null);
+        setSelectedParentDefinition(null);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        resetForm();
     };
 
     const handleDeleteClick = (id: string) => {
@@ -124,11 +182,12 @@ const Definition = () => {
         if (definitionToDelete !== null) {
             try {
                 await deleteDefinition(definitionToDelete);
-                setDefinitions((prev) => prev.filter((def) => def.id !== definitionToDelete));
+                setDefinitions(prev => prev.filter(def => def.id !== definitionToDelete));
                 setDeleteModalOpen(false);
                 setDefinitionToDelete(null);
             } catch (error) {
                 console.error('Error deleting definition:', error);
+                await fetchDefinitionsData();
             }
         }
     };
@@ -157,11 +216,11 @@ const Definition = () => {
                         options={definitionEnum}
                         placeholder="Bir Tanım Tipi Seçin"
                         onChange={handleDropdownChange}
+                        value={definitionEnum.find(option => option.value === selectedEnum)}
                     />
                 </div>
 
-                <div
-                    className="overflow-x-auto rounded-sm border border-stroke bg-white p-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+                <div className="overflow-x-auto rounded-sm border border-stroke bg-white p-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
                     <table className="w-full min-w-max table-auto">
                         <thead>
                         <tr className="bg-gray-2 text-left dark:bg-meta-4">
@@ -179,11 +238,11 @@ const Definition = () => {
                         </thead>
                         <tbody>
                         {Array.isArray(definitions) && definitions.length > 0 ? (
-                            definitions.map((definition, key) => (
-                                <tr key={key}>
+                            definitions.map((definition) => (
+                                <tr key={definition.id}>
                                     <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                                         <h5 className="font-medium text-black dark:text-white">
-                                            {definition.parentName}
+                                            {definition.parentName || '-'}
                                         </h5>
                                     </td>
                                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
@@ -196,21 +255,24 @@ const Definition = () => {
                                     </td>
                                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                                         <div className="flex items-center space-x-3.5">
-                                            <button className="hover:text-amber-500">
-                                                <FilePenLine/>
+                                            <button
+                                                className="hover:text-amber-500"
+                                                onClick={() => handleEditClick(definition)}
+                                            >
+                                                <FilePenLine />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteClick(definition.id)}
                                                 className="hover:text-red-500"
                                             >
-                                                <Trash2/>
+                                                <Trash2 />
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr>
+                            <tr key="empty-row">
                                 <td colSpan={4} className="py-5 text-center text-gray-500">
                                     Gösterilecek tanım bulunamadı.
                                 </td>
@@ -221,12 +283,12 @@ const Definition = () => {
                 </div>
             </div>
 
-            {/* Tanım Ekleme Modal */}
             {modalOpen && (
-                <div
-                    className="fixed inset-0 z-50 mt-25 flex items-start justify-center bg-gray-500 bg-opacity-50 dark:bg-black dark:bg-opacity-70">
+                <div className="fixed inset-0 z-50 mt-25 flex items-start justify-center bg-gray-500 bg-opacity-50 dark:bg-black dark:bg-opacity-70">
                     <div className="z-50 w-full max-w-4xl rounded-lg bg-white p-10 shadow-lg dark:bg-boxdark">
-                        <h2 className="text-2xl font-semibold text-black dark:text-white">Yeni Tanım Ekle</h2>
+                        <h2 className="text-2xl font-semibold text-black dark:text-white">
+                            {isEditMode ? 'Tanımı Düzenle' : 'Yeni Tanım Ekle'}
+                        </h2>
                         <hr className="my-5 border-t-2 border-gray-300 dark:border-gray-700"/>
                         <form onSubmit={handleSubmit}>
                             <div>
@@ -234,14 +296,17 @@ const Definition = () => {
                                     options={definitionEnum}
                                     placeholder="Bir Tanım Tipi Seçin"
                                     onChange={handleDefinitionTypeChange}
+                                    value={definitionEnum.find(option => option.value === Number(newDefinition.type))}
                                 />
                             </div>
                             <div className="mt-6">
                                 <input
                                     type="text"
                                     placeholder="Tanım adı girin"
-                                    onChange={handleInputChange}
+                                    value={newDefinition.name}
+                                    onChange={(e) => setNewDefinition(prev => ({ ...prev, name: e.target.value }))}
                                     className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                                    required
                                 />
                             </div>
                             {definitionType === 3 && (
@@ -249,7 +314,8 @@ const Definition = () => {
                                     <input
                                         type="text"
                                         placeholder="Tanım kodu girin"
-                                        onChange={handleInputChange}
+                                        value={newDefinition.code}
+                                        onChange={(e) => setNewDefinition(prev => ({ ...prev, code: e.target.value }))}
                                         className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                                     />
                                 </div>
@@ -260,6 +326,7 @@ const Definition = () => {
                                         options={parentDefinitions}
                                         placeholder="Bir Üst Eleman Seçin"
                                         onChange={handleParentDefinitionChange}
+                                        value={parentDefinitions.find(option => option.value === Number(newDefinition.parentId))}
                                     />
                                 </div>
                             )}
@@ -273,9 +340,9 @@ const Definition = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-md bg-blue-500 px-8 py-3 text-white hover:bg-blue-600"
+                                    className="rounded-md bg-blue-5s00 px-8 py-3 text-white hover:bg-blue-600"
                                 >
-                                    Kaydet
+                                    {isEditMode ? 'Güncelle' : 'Kaydet'}
                                 </button>
                             </div>
                         </form>
@@ -283,10 +350,8 @@ const Definition = () => {
                 </div>
             )}
 
-            {/* Silme Onay Modalı */}
             {deleteModalOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50 dark:bg-black dark:bg-opacity-70">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50 dark:bg-black dark:bg-opacity-70">
                     <div className="z-50 w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-boxdark">
                         <h2 className="text-xl font-semibold text-black dark:text-white">
                             Tanımı Silmek İstiyor Musunuz?

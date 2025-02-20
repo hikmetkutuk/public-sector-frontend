@@ -1,4 +1,4 @@
-﻿import { CreateDefinitionProps } from '@/types';
+﻿import {CreateDefinitionProps, DefinitionProps} from '@/types';
 
 export const createDefinition = async (definitionData: CreateDefinitionProps) => {
   try {
@@ -8,7 +8,8 @@ export const createDefinition = async (definitionData: CreateDefinitionProps) =>
       body: JSON.stringify(definitionData),
     });
 
-    return await response.json();
+    const data = await response.json();
+    return { ...data, id: data.id };
   } catch (error) {
     console.error('Error creating definition', error);
     throw error;
@@ -19,7 +20,10 @@ export const fetchDefinitions = async (selectedEnum: number) => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${selectedEnum}`);
     const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    return data.map((item: DefinitionProps) => ({
+      ...item,
+      id: item.id // Should always exist and be unique
+    }));
   } catch (error) {
     console.error('Error retrieving definitions', error);
     return [];
@@ -58,10 +62,30 @@ export const fetchParentDefinitions = async () => {
   }
 };
 
+export const updateDefinition = async (id: string, definitionData: CreateDefinitionProps) => {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(definitionData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update definition');
+    }
+
+    const data = await response.json();
+    return { ...data, id: data.id || id };
+  } catch (error) {
+    console.error('Error updating definition', error);
+    throw error;
+  }
+};
+
 export const deleteDefinition = async (id: string) => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
     method: 'DELETE',
   });
-  if (!response.ok) throw new Error('Silme başarısız');
+  if (!response.ok) throw new Error('Failed to delete definition');
   return response.json();
 };
