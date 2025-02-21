@@ -3,20 +3,21 @@
 /**
  * Creates a new definition.
  * @param {CreateDefinitionProps} definitionData - The data for the new definition.
- * @returns {Promise<Object>} The created definition with its ID.
+ * @returns {Promise<DefinitionProps>} The created definition.
  */
-export const createDefinition = async (definitionData: CreateDefinitionProps): Promise<object> => {
+export const createDefinition = async (
+  definitionData: CreateDefinitionProps
+): Promise<DefinitionProps> => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(definitionData),
     });
-
     const data = await response.json();
     return { ...data, id: data.id };
   } catch (error) {
-    console.error('Error creating definition', error);
+    console.error('Error creating definition:', error);
     throw error;
   }
 };
@@ -29,13 +30,22 @@ export const createDefinition = async (definitionData: CreateDefinitionProps): P
 export const fetchDefinitions = async (selectedEnum: number): Promise<DefinitionProps[]> => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${selectedEnum}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return [];
+      }
+    }
     const data = await response.json();
+    if (!Array.isArray(data)) {
+      console.warn('Expected an array but got:', data);
+      return [];
+    }
     return data.map((item: DefinitionProps) => ({
       ...item,
-      id: item.id, // 📌 Should always exist and be unique
+      id: item.id,
     }));
   } catch (error) {
-    console.error('Error retrieving definitions', error);
+    console.error('Error retrieving definitions:', error);
     return [];
   }
 };
@@ -48,20 +58,19 @@ export const fetchEnumDefinitions = async (): Promise<Array<{ value: number; lab
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/enum`);
     const data = await response.json();
-
     return Object.keys(data).map((key) => ({
       value: data[key].value,
       label: data[key].description,
     }));
   } catch (error) {
-    console.error('An error occurred while retrieving data: ', error);
+    console.error('Error fetching enum definitions:', error);
     throw error;
   }
 };
 
 /**
  * Fetches parent definitions.
- * @returns {Promise<Array<{value: string, label: string}>>} The fetched parent definitions.
+ * @returns {Promise<Array<{value: number, label: string}>>} The fetched parent definitions.
  */
 export const fetchParentDefinitions = async (): Promise<
   Array<{ value: string; label: string }>
@@ -69,7 +78,6 @@ export const fetchParentDefinitions = async (): Promise<
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/1`);
     const data = await response.json();
-
     return Array.isArray(data)
       ? data.map((item) => ({
           value: item.id,
@@ -86,23 +94,22 @@ export const fetchParentDefinitions = async (): Promise<
  * Updates an existing definition.
  * @param {string} id - The ID of the definition to update.
  * @param {CreateDefinitionProps} definitionData - The updated data for the definition.
- * @returns {Promise<Object>} The updated definition with its ID.
+ * @returns {Promise<DefinitionProps>} The updated definition.
  */
 export const updateDefinition = async (
   id: string,
   definitionData: CreateDefinitionProps
-): Promise<object> => {
+): Promise<DefinitionProps> => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(definitionData),
     });
-
     const data = await response.json();
     return { ...data, id: data.id || id };
   } catch (error) {
-    console.error('Error updating definition', error);
+    console.error('Error updating definition:', error);
     throw error;
   }
 };
@@ -113,9 +120,13 @@ export const updateDefinition = async (
  * @returns {Promise<Object>} The response from the delete operation.
  */
 export const deleteDefinition = async (id: string): Promise<object> => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) throw new Error('Failed to delete definition');
-  return response.json();
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/definition/${id}`, {
+      method: 'DELETE',
+    });
+    return response.json();
+  } catch (error) {
+    console.error('Error deleting definition:', error);
+    throw error;
+  }
 };
