@@ -15,7 +15,7 @@ declare interface SidebarItemProps {
 
 declare interface SidebarProps {
     sidebarOpen: boolean;
-    setSidebarOpen: (arg: boolean) => void;
+    setSidebarOpen: (isOpen: boolean) => void;
 }
 
 declare interface SidebarDropdownProps {
