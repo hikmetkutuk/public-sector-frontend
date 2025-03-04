@@ -10,11 +10,11 @@ const ibmPlexSerif = IBM_Plex_Serif({
   variable: '--font-ibm-plex-serif',
 });
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>) => {
   return (
     <html lang="en">
       <body
@@ -25,4 +25,6 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+};
+
+export default React.memo(RootLayout);

@@ -407,4 +407,4 @@ const Definition = () => {
   );
 };
 
-export default Definition;
+export default React.memo(Definition);
