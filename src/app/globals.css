@@ -243,3 +243,8 @@ input[type='search']::-webkit-search-cancel-button {
 [x-cloak] {
   display: none !important;
 }
+
+.menu-icon {
+  width: 17px;
+  height: 17px;
+}
