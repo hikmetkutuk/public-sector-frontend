@@ -57,8 +57,16 @@ declare interface DefinitionPageProps {
 }
 
 // organisation
-declare interface OrganizationNode {
-  id: number;
+declare interface OrganisationNode {
+  id: string;
   name: string;
-  children?: OrganizationNode[];
+  organizationType: number;
+  parentId: string | null;
+  parentName: string | null;
+  children?: OrganisationNode[];
+}
+
+declare interface TreeNodeProps {
+  node: OrganisationNode;
+  onClick?: (id: string | null) => void;
 }
