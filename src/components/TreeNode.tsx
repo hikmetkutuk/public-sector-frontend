@@ -43,7 +43,11 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({ node, onClick }) => {
             <Folder size={16} fill="currentColor" className="ml-6" />
           )}
         </span>
-        <span className="flex items-center text-gray-800 text-sm dark:text-white">{node.name}</span>
+        <span className="flex items-center text-sm text-gray-800 dark:text-white">
+          {node.name}
+          {node.typeText &&
+            ` ${node.typeText === 'Kategori' || node.typeText === 'Başlık' ? '' : '(' + node.typeText + ')'}`}
+        </span>
       </div>
       {hasChildren && isOpen && node.children && (
         <div className="ml-10">

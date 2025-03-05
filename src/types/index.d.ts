@@ -63,6 +63,7 @@ declare interface OrganisationNode {
   organizationType: number;
   parentId: string | null;
   parentName: string | null;
+  typeText: string | null;
   children?: OrganisationNode[];
 }
 
